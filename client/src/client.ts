@@ -2,6 +2,7 @@ import * as amqplib from "amqplib";
 import { rabbitMQ } from "./config";
 import { Consumer } from "./consumer";
 import { Producer } from "./producer";
+import { EventEmitter } from "events";
 
 class RabbitMQClient {
   //private pour empecher de creer new RabbitMqClient a l'exterieur 
@@ -33,6 +34,9 @@ class RabbitMQClient {
   // Connexion
   private connection!: amqplib.Connection;
 
+  //new champ pour l'event 
+  private eventEmitter!:EventEmitter
+
   // Fonction d'initialisation
   async initialize() {
     if (this.isInitialized) {
@@ -48,19 +52,22 @@ class RabbitMQClient {
 
       //queue , on cree un queue ""==> demande à rabbitMq de cree un nom aleatoire , exclusive:true=> connection privé, seule ma connexion peut l'utiliser et quand la conn est fermé, la queue sera supprimé, le replyQueueName correspond au nom du queue, au lieu d'ecire replyQueueNAME= q.queue
 
+      //le queue temporaire
       const { queue: replyQueueName } = await this.consumerChannel.assertQueue(
         "",
         { exclusive: true }
       );
 
+      //initialiser le eVENT
+      this.eventEmitter= new EventEmitter()
+
       //j'appelle maintenant le consommer
-      this.consumer = new Consumer(this.consumerChannel, replyQueueName);
+      this.consumer = new Consumer(this.consumerChannel, replyQueueName,this.eventEmitter);
 
       //le producer
-      this.producer = new Producer(this.producerChannel, replyQueueName);
+      this.producer = new Producer(this.producerChannel, replyQueueName,this.eventEmitter);
 
-      //recevoir le messages
-
+      //recevoir le messages, alors j'ectoue tjrs si si on initialize la class
       await this.consumer.consumeMessage();
 
       this.isInitialized = true;

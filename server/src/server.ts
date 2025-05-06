@@ -1,22 +1,9 @@
-class Voiture {
-  constructor() {}
-}
+import RabbitMQClient from "./client";
 
-class ObjectVoiture {
-  private static instance: Voiture;
-
-  public static getInstance() {
-    if (!this.instance) {
-      this.instance = new Voiture();
-    }
-  }
-
-  public static hello() {
-    return "bonjour saluut";
-  }
-}
-export default ObjectVoiture.getInstance();
-
-const daba = ObjectVoiture.hello();
-
-console.log(daba);
+RabbitMQClient.initialize()
+  .then(() => {
+    console.log("lancement du server ......");
+  })
+  .catch((error) => {
+    console.log("une erreur lors de l'initialisation de RabbitMQServer", error);
+  });
